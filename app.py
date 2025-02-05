@@ -29,10 +29,6 @@ def execute_sql_query(query, params=None):
 
 @app.route('/ga4gh/drs/v1/objects/<hubmap_id>')
 def get_matches():
-    hubmap_id = request.args.get('hubmap_id')
-    if not hubmap_id:
-        return jsonify({'error': 'HuBMAP ID is required to perform this operation'}), 400
-
     query = """
     SELECT drs_uri FROM files
     INNER JOIN manifest ON manifest.hubmap_id = files.hubmap_id
