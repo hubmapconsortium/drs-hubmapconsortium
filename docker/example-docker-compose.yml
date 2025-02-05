@@ -1,0 +1,19 @@
+version: '3'
+name: 'drs'
+services:
+  nginx:
+    image: nginx:alpine
+#    volumes:
+#      - SSL Certs
+#      - NGINX Config
+    ports:
+      - "80:80"
+    depends_on:
+      - web
+  web:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    command: bash -c "docker/drs-hubmapconsortium/start.sh"
+    volumes:
+      - ../:/code

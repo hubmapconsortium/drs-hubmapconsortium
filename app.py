@@ -4,18 +4,17 @@ import pymysql.cursors
 app = Flask(__name__)
 
 # Configure MySQL
-MYSQL_HOST = 'localhost'
-MYSQL_USER = 'readonly'
+MYSQL_HOST = ''
+MYSQL_USER = ''
 MYSQL_PASSWORD = ''
-MYSQL_DB = 'drs'
+MYSQL_DB = ''
 
 def connect_to_database():
     connection = pymysql.connect(host=MYSQL_HOST,
                                  user=MYSQL_USER,
                                  password=MYSQL_PASSWORD,
                                  database=MYSQL_DB,
-                                 cursorclass=pymysql.cursors.DictCursor,
-                                 unix_socket="/var/lib/mysql/mysql.sock")
+                                 cursorclass=pymysql.cursors.DictCursor)
     return connection
 
 def execute_sql_query(query, params=None):
@@ -30,10 +29,6 @@ def execute_sql_query(query, params=None):
 
 @app.route('/ga4gh/drs/v1/objects/<hubmap_id>')
 def get_matches():
-    hubmap_id = request.args.get('hubmap_id')
-    if not hubmap_id:
-        return jsonify({'error': 'HuBMAP ID is required to perform this operation'}), 400
-
     query = """
     SELECT drs_uri FROM files
     INNER JOIN manifest ON manifest.hubmap_id = files.hubmap_id
@@ -46,11 +41,14 @@ def get_matches():
 @app.route('/datasets', methods=['GET'])
 def get_included_datasets():
     query = """
-    SELECT DISTINCT hubmap_uuid FROM manifest;
+    SELECT DISTINCT hubmap_id FROM manifest;
     """
 
     matches = execute_sql_query(query)
     return jsonify(matches)
 
+def create_app():
+    return app
+
 if __name__ == '__main__':
-    app.run(debug=True, host="127.0.0.1")
+    app.run(debug=True, host="127.0.0.1", port="5000")
