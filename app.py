@@ -28,7 +28,7 @@ def execute_sql_query(query, params=None):
     return result
 
 @app.route('/ga4gh/drs/v1/objects/<hubmap_id>')
-def get_matches():
+def get_matches(hubmap_id):
     query = """
     SELECT drs_uri FROM files
     INNER JOIN manifest ON manifest.hubmap_id = files.hubmap_id
