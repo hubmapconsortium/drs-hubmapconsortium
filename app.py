@@ -139,5 +139,9 @@ def get_included_datasets():
     return jsonify(matches)
 
 
+def create_app():
+    return app
+
+
 if __name__ == "__main__":
     app.run(debug=True, host="127.0.0.1", port="5000")
