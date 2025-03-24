@@ -127,7 +127,7 @@ def get_drs_object(drs_uuid):
         contents = execute_sql_query(query, (object[0]["hubmap_id"],))
         body["contents"] = [
             {
-                "name": content["name"],
+                "name": content["name"].split("/")[-1],
                 "id": content["file_uuid"],
                 "drs_uri": f"drs://{DOMAIN}/{content['file_uuid']}",
             }
