@@ -121,7 +121,7 @@ def get_drs_object(drs_uuid):
             {
                 "name": content["name"],
                 "id": content["file_uuid"],
-                "drs_uri": f"drs://{DOMAIN}/{body['id']}",
+                "drs_uri": f"drs://{DOMAIN}/{content['file_uuid']}",
             }
             for content in contents
         ]
