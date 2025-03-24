@@ -92,7 +92,7 @@ def get_drs_object(drs_uuid):
             body["id"] = object[0]["file_uuid"]
             body["self_uri"] = f"drs://{DOMAIN}/{body['id']}"
             body["name"] = path.split("/")[-1]
-            body["size"] = object[0]["size"]
+            body["size"] = int(object[0]["size"])
             body["created_time"] = object[0]["creation_date"]
 
             access_path = "/" + "/".join(path.split("/")[2:])
