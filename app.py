@@ -13,6 +13,7 @@ MYSQL_USER = config_data["MYSQL_USER"]
 MYSQL_PASSWORD = config_data["MYSQL_PASSWORD"]
 MYSQL_DB = config_data["MYSQL_DB"]
 DOMAIN = config_data["DOMAIN"]
+ACCESS_DOMAIN = config_data["ACCESS_DOMAIN"]
 
 
 def connect_to_database():
@@ -91,10 +92,13 @@ def get_drs_object(drs_uuid):
             body["name"] = object[0]["name"]
             body["size"] = object[0]["size"]
             body["created_time"] = object[0]["creation_date"]
+
+            path = object[0]["name"]
+            access_path = "/" + "/".join(path.split("/")[2:])
             body["access_methods"] = [
                 {
                     "type": "https",
-                    "access_url": {"url": "https://fake_url_for_testing.com"},
+                    "access_url": {"url": f"https://{ACCESS_DOMAIN}{access_path}"},
                 }
             ]
             body["checksums"] = [{"checksum": object[0]["md5"], "type": "md5"}]
