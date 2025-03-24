@@ -87,13 +87,14 @@ def get_drs_object(drs_uuid):
             # If neither exists, 404.
             pass
         else:
+            path = object[0]["name"]
+
             body["id"] = object[0]["file_uuid"]
             body["self_uri"] = f"drs://{DOMAIN}/{body['id']}"
-            body["name"] = object[0]["name"]
+            body["name"] = path.split("/")[-1]
             body["size"] = object[0]["size"]
             body["created_time"] = object[0]["creation_date"]
 
-            path = object[0]["name"]
             access_path = "/" + "/".join(path.split("/")[2:])
             body["access_methods"] = [
                 {
