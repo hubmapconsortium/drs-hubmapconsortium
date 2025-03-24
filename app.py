@@ -93,7 +93,7 @@ def get_drs_object(drs_uuid):
         # If it exists, then we know we have to build the bundle
         # Build the metadata object
         body["id"] = object[0]["uuid"]
-        body["size"] = pretty_to_bytes([0]["pretty_size"])
+        body["size"] = pretty_to_bytes(object[0]["pretty_size"])
         body["created_time"] = object[0]["creation_date"]
         body["checksums"] = [{"checksum": "", "type": "md5"}]
         body["description"] = f"{object[0]['hubmap_uuid']} - {object[0]['datset_type']} dataset"
