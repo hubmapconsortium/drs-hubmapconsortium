@@ -43,7 +43,7 @@ def pretty_to_bytes(pretty_str):
     return int(num * units.get(unit, 1))
 
 
-@app.route("/ga4gh/drs/v1/objects/<uuid>")
+@app.route("/ga4gh/drs/v1/objects/<drs_uuid>")
 def get_drs_object(drs_uuid):
     body = {
         "id": "",
