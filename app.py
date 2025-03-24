@@ -98,11 +98,11 @@ def get_drs_object(drs_uuid):
         body["checksums"] = [{"checksum": "", "type": "md5"}]
         body["description"] = f"{object[0]['hubmap_id']} - {object[0]['dataset_type']} dataset"
 
-        # TODO Need info from the files
-        # query = """
-        # SELECT * FROM files WHERE manifest_id = %s;
-        # """
-        # contents = execute_sql_query(query, (object[0]["manifest_id"],))
+        query = """
+        SELECT * FROM files WHERE manifest_id = %s;
+        """
+        contents = execute_sql_query(query, (object[0]["manifest_id"],))
+        body["contents"] = [{"name": content["name"], "id": content["file_uuid"], "drs_uri": content["drs_uri"]} for content in contents]
 
     return jsonify(body)
 
