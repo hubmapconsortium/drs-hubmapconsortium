@@ -97,6 +97,7 @@ def get_drs_object(drs_uuid):
                     "access_url": {"url": "https://fake_url_for_testing.com"},
                 }
             ]
+            body["checksums"] = [{"checksum": object[0]["md5"], "type": "md5"}]
             # If it exists, then we build the individual object response
             # Build the metadata object
             pass
