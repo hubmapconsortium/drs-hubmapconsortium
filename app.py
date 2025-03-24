@@ -99,7 +99,7 @@ def get_drs_object(drs_uuid):
             body["access_methods"] = [
                 {
                     "type": "https",
-                    "access_url": {"url": f"{ACCESS_DOMAIN}{access_path}"},
+                    "access_url": {"url": f"https://{ACCESS_DOMAIN}{access_path}"},
                     "access_id": ""
                 }
             ]
