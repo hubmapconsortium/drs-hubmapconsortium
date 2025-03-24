@@ -96,7 +96,7 @@ def get_drs_object(drs_uuid):
         body["size"] = pretty_to_bytes(object[0]["pretty_size"])
         body["created_time"] = object[0]["creation_date"]
         body["checksums"] = [{"checksum": "", "type": "md5"}]
-        body["description"] = f"{object[0]['hubmap_id']} - {object[0]['datset_type']} dataset"
+        body["description"] = f"{object[0]['hubmap_id']} - {object[0]['dataset_type']} dataset"
 
         # TODO Need info from the files
         # query = """
