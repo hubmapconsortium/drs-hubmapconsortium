@@ -1,21 +1,30 @@
 from flask import Flask, jsonify, request
 import pymysql.cursors
+import json
 
 app = Flask(__name__)
+# Load configuration from JSON file
+with open("config.json") as config_file:
+    config_data = json.load(config_file)
 
 # Configure MySQL
-MYSQL_HOST = ''
-MYSQL_USER = ''
-MYSQL_PASSWORD = ''
-MYSQL_DB = ''
+MYSQL_HOST = config_data["MYSQL_HOST"]
+MYSQL_USER = config_data["MYSQL_USER"]
+MYSQL_PASSWORD = config_data["MYSQL_PASSWORD"]
+MYSQL_DB = config_data["MYSQL_DB"]
+DOMAIN = config_data["DOMAIN"]
+
 
 def connect_to_database():
-    connection = pymysql.connect(host=MYSQL_HOST,
-                                 user=MYSQL_USER,
-                                 password=MYSQL_PASSWORD,
-                                 database=MYSQL_DB,
-                                 cursorclass=pymysql.cursors.DictCursor)
+    connection = pymysql.connect(
+        host=MYSQL_HOST,
+        user=MYSQL_USER,
+        password=MYSQL_PASSWORD,
+        database=MYSQL_DB,
+        cursorclass=pymysql.cursors.DictCursor,
+    )
     return connection
+
 
 def execute_sql_query(query, params=None):
     connection = connect_to_database()
@@ -27,12 +36,14 @@ def execute_sql_query(query, params=None):
         connection.close()
     return result
 
+
 def pretty_to_bytes(pretty_str):
     units = {"B": 1, "K": 1024, "M": 1024**2, "G": 1024**3, "T": 1024**4}
     num, unit = float(pretty_str[:-1]), pretty_str[-1].upper()
     return int(num * units.get(unit, 1))
 
-@app.route('/ga4gh/drs/v1/objects/<drs_uuid>')
+
+@app.route("/ga4gh/drs/v1/objects/<uuid>")
 def get_drs_object(drs_uuid):
     body = {
         "id": "",
@@ -50,10 +61,9 @@ def get_drs_object(drs_uuid):
         # ],
     }
 
-    # TODO:
     # First we try to find the object in the manifest table
     query = """
-    SELECT * FROM manifest WHERE uuid = %s;
+    SELECT * FROM manifest WHERE hubmap_id = %s;
     """
 
     object = execute_sql_query(query, (drs_uuid,))
@@ -76,47 +86,58 @@ def get_drs_object(drs_uuid):
             # If neither exists, 404.
             pass
         else:
-            body["id"] = object[0]["uuid"]
+            body["id"] = object[0]["file_uuid"]
+            body["self_uri"] = f"drs://{DOMAIN}/{body['id']}"
             body["name"] = object[0]["name"]
             body["size"] = object[0]["size"]
             body["created_time"] = object[0]["creation_date"]
-            body["access_methods"] = [{
-                "type": "https",
-                "access_url": {
-                    "url": "https://fake_url_for_testing.com"
+            body["access_methods"] = [
+                {
+                    "type": "https",
+                    "access_url": {"url": "https://fake_url_for_testing.com"},
                 }
-            }]
+            ]
             # If it exists, then we build the individual object response
             # Build the metadata object
             pass
     else:
         # If it exists, then we know we have to build the bundle
         # Build the metadata object
-        body["id"] = object[0]["uuid"]
+        body["id"] = object[0]["hubmap_id"]
+        body["self_uri"] = f"drs://{DOMAIN}/{body['id']}"
         body["size"] = pretty_to_bytes(object[0]["pretty_size"])
         body["created_time"] = object[0]["creation_date"]
         body["checksums"] = [{"checksum": "", "type": "md5"}]
-        body["description"] = f"{object[0]['hubmap_id']} - {object[0]['dataset_type']} dataset"
+        body["description"] = (
+            f"{object[0]['hubmap_id']} - {object[0]['dataset_type']} dataset"
+        )
 
+        # Get data to fill out contents index
         query = """
-        SELECT * FROM files WHERE manifest_id = %s;
+        SELECT * FROM files WHERE hubmap_id = %s;
         """
-        contents = execute_sql_query(query, (object[0]["manifest_id"],))
-        body["contents"] = [{"name": content["name"], "id": content["file_uuid"], "drs_uri": content["drs_uri"]} for content in contents]
+        contents = execute_sql_query(query, (object[0]["hubmap_id"],))
+        body["contents"] = [
+            {
+                "name": content["name"],
+                "id": content["file_uuid"],
+                "drs_uri": f"drs://{DOMAIN}/{body['id']}",
+            }
+            for content in contents
+        ]
 
     return jsonify(body)
 
-@app.route('/datasets', methods=['GET'])
+
+@app.route("/datasets", methods=["GET"])
 def get_included_datasets():
     query = """
-    SELECT DISTINCT uuid FROM manifest;
+    SELECT DISTINCT hubmap_id FROM manifest;
     """
 
     matches = execute_sql_query(query)
     return jsonify(matches)
 
-def create_app():
-    return app
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run(debug=True, host="127.0.0.1", port="5000")
