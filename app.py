@@ -100,7 +100,7 @@ def get_drs_object(drs_uuid):
                 {
                     "type": "https",
                     "access_url": {"url": f"https://{ACCESS_DOMAIN}{access_path}"},
-                    "access_id": None
+                    "access_id": "https"
                 }
             ]
             body["checksums"] = [{"checksum": object[0]["md5"], "type": "md5"}]
