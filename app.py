@@ -131,7 +131,7 @@ def get_drs_object(drs_uuid):
 
 
 @app.route("/ga4gh/drs/v1/objects/<drs_uuid>/access/<access_method>")
-def get_drs_object(drs_uuid, access_method):
+def get_drs_object_by_access_method(drs_uuid, access_method):
     query = """
     SELECT files.*, manifest.creation_date 
     FROM files         
