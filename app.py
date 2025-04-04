@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, make_response
 import pymysql.cursors
 import json
 
@@ -52,14 +52,7 @@ def get_drs_object(drs_uuid):
         "size": 0,
         "created_time": "",
         "checksums": [],
-        # Required for single blob
         "access_methods": [],
-        # "contents": [
-        #     {
-        #         "name": "string", # Required
-        #         "drs_uri": "drs://drs.example.org/314159",
-        #     }
-        # ],
     }
 
     # First we try to find the object in the manifest table
@@ -70,7 +63,7 @@ def get_drs_object(drs_uuid):
     object = execute_sql_query(query, (drs_uuid,))
     if len(object) > 1:
         # This should be an error, should only be one uuid in the system
-        pass
+        return make_response(jsonify({"msg": "More than one object found."}), 404)
     elif len(object) == 0:
         # If it doesn't then we try to find it on the files table
         query = """
@@ -82,10 +75,10 @@ def get_drs_object(drs_uuid):
         object = execute_sql_query(query, (drs_uuid,))
         if len(object) > 1:
             # Same error as above
-            pass
+            return make_response(jsonify({"msg": "More than one object found."}), 404)
         elif len(object) == 0:
             # If neither exists, 404.
-            pass
+            return make_response(jsonify({"msg": "No object found."}), 404)
         else:
             path = object[0]["name"]
 
@@ -133,6 +126,31 @@ def get_drs_object(drs_uuid):
             }
             for content in contents
         ]
+
+    return jsonify(body)
+
+
+@app.route("/ga4gh/drs/v1/objects/<drs_uuid>/access/<access_method>")
+def get_drs_object(drs_uuid, access_method):
+    query = """
+    SELECT files.*, manifest.creation_date 
+    FROM files         
+    LEFT JOIN manifest ON manifest.hubmap_id = files.hubmap_id
+    WHERE file_uuid = %s;
+    """
+    object = execute_sql_query(query, (drs_uuid,))
+    if len(object) > 1:
+        # Same error as above
+        return make_response(jsonify({"msg": "More than one object found."}), 404)
+    elif len(object) == 0:
+        # If neither exists, 404.
+        return make_response(jsonify({"msg": "No object found."}), 404)
+    else:
+        path = object[0]["name"]
+        access_path = "/" + "/".join(path.split("/")[2:])
+        body = {
+            "url": f"https://{ACCESS_DOMAIN}{access_path}"
+        }
 
     return jsonify(body)
 
