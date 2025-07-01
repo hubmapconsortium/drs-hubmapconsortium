@@ -96,7 +96,7 @@ def get_drs_object(drs_uuid):
                     "access_id": "https"
                 }
             ]
-            body["checksums"] = [{"checksum": object[0]["md5"], "type": "md5"}]
+            body["checksums"] = [{"checksum": object[0]["checksum"], "type": "md5"}]
             body["description"] = f"{object[0]['hubmap_id']} - file {object[0]['name']}"
             # If it exists, then we build the individual object response
             # Build the metadata object
