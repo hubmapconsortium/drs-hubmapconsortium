@@ -1,8 +1,10 @@
 from flask import Flask, jsonify, make_response
+from flask_cors import CORS
 import pymysql.cursors
 import json
 
 app = Flask(__name__)
+CORS(app)
 # Load configuration from JSON file
 with open("config.json") as config_file:
     config_data = json.load(config_file)
@@ -163,6 +165,15 @@ def get_included_datasets():
 
     matches = execute_sql_query(query)
     return jsonify(matches)
+
+
+@app.route("/ga4gh/drs/v1/service-info", methods=["GET"])
+def get_service_info():
+    return jsonify(
+        {"id": "org.hubmapconsortium.drs", "name": "HuBMAP DRS",
+         "type": {"group": "org.hubmapconsortium", "artifact": "drs", "version": "1.0.0"},
+         "organization": {"name": "HubMAP Consortium", "url": "https://hubmapconsortium.org"}, "version": "1.0.0"}
+    )
 
 
 def create_app():
