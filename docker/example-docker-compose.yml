@@ -17,3 +17,8 @@ services:
     command: bash -c "docker/drs-hubmapconsortium/start.sh"
     volumes:
       - ../:/code
+  mariadb:
+    image: mariadb:10.6.19
+    restart: always
+    volumes:
+      - /var/lib/mysql:/var/lib/mysql

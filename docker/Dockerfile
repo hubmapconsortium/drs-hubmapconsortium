@@ -1,4 +1,4 @@
-FROM python:3.10-buster
+FROM python:3.11-bookworm
 WORKDIR /code
 ENV PYTHONUNBUFFERED=1
 COPY requirements.txt /tmp/
