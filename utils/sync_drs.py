@@ -148,7 +148,7 @@ class DRSSynchronizer:
                     redirect_url = response.text
                     if redirect_url:
                         print(f"Following 303 redirect to: {redirect_url}")
-                        # response = requests.get(url=redirect_url, headers=self.headers)
+                        response = requests.get(url=redirect_url)
                     else:
                         print(f"303 redirect received but no Location header for dataset+ {dataset_uuid}")
                         continue
