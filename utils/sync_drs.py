@@ -144,7 +144,7 @@ class DRSSynchronizer:
             try:
                 response = requests.get(url=url, headers=self.headers, timeout=30)
                 if response.status_code == 303:
-                    redirect_url = response.headers.get('Location')
+                    redirect_url = response.text
                     if redirect_url:
                         print(f"Following 303 redirect to: {redirect_url}")
                         response = requests.get(url=redirect_url, headers=self.headers)
