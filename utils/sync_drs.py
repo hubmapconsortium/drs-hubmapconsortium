@@ -8,7 +8,7 @@ It performs the following operations:
 2. Fetches all files for those datasets from UUID API
 3. Fetches current datasets and files from DRS
 4. Compares to identify missing datasets and files
-5. Generates CSV files for import (manifest.csv and files.csv)
+5. Generates CSV files for import (manifest_copy.csv and files_copy.csv)
 6. Outputs SQL queries for database updates
 
 Requirements:
@@ -50,6 +50,40 @@ class DRSSynchronizer:
         """
         self.bearer_token = bearer_token or BEARER_TOKEN
         self.headers = {'Authorization': f'Bearer {self.bearer_token}'}
+
+    def _get_dataset_base_paths(self, dataset_ids: List[str]) -> Dict[str, str]:
+        """Get base paths for multiple datasets in batches from Ingest API.
+
+        Args:
+            dataset_ids: List of dataset UUIDs to fetch base paths for
+
+        Returns:
+            Dict mapping dataset UUID to base path
+        """
+        url = "https://ingest.api.hubmapconsortium.org/datasets/file-system-abs-path"
+        headers = {'Authorization': f'Bearer {self.bearer_token}'}
+
+        batch_size = 100
+        base_paths = {}
+
+        for i in range(0, len(dataset_ids), batch_size):
+            batch = dataset_ids[i:i + batch_size]
+            try:
+                response = requests.post(url, headers=headers, json=batch, timeout=30)
+
+                if response.status_code == 200:
+                    for item in response.json():
+                        dataset_id = item.get('uuid')
+                        base_path = item.get('path')
+                        if dataset_id and base_path:
+                            base_paths[dataset_id] = base_path
+                else:
+                    print(f"   Warning: Error fetching batch {i // batch_size}: HTTP {response.status_code}")
+            except requests.exceptions.RequestException as e:
+                print(f"   Warning: Error fetching batch {i // batch_size}: {e}")
+                continue
+
+        return base_paths
 
     # ============================================================================
     # STEP 1: GATHER DATA FROM SEARCH API
@@ -111,6 +145,16 @@ class DRSSynchronizer:
             df = df[[col for col in columns_to_keep if col in df.columns]]
 
             print(f"   Found {len(df)} published datasets in Search API")
+
+            # Get base paths for all datasets
+            print("   Fetching dataset base paths from Ingest API...")
+            dataset_ids = df['uuid'].tolist()
+            base_paths = self._get_dataset_base_paths(dataset_ids)
+
+            # Add directory column to dataframe
+            df['directory'] = df['uuid'].map(base_paths).fillna('')
+            print(f"   Retrieved {len(base_paths)} base paths")
+
             return df
 
         except requests.exceptions.RequestException as e:
@@ -280,7 +324,7 @@ class DRSSynchronizer:
         self,
         missing_datasets: pd.DataFrame,
         uuid_files: pd.DataFrame,
-        output_file: str = "manifest.csv"
+        output_file: str = "manifest_copy.csv"
     ) -> None:
         """
         Generate manifest.csv for importing new datasets into DRS.
@@ -324,10 +368,10 @@ class DRSSynchronizer:
                 'hubmap_id': hubmap_id,
                 'creation_date': dataset.get('published_timestamp', datetime.now().isoformat()),
                 'dataset_type': dataset.get('dataset_type', ''),
-                'directory': '',  # This would need to be populated from file system info
+                'directory': dataset.get('directory', ''),
                 'doi_url': dataset.get('doi_url', ''),
                 'group_name': dataset.get('group_name', ''),
-                'is_protected': 1 if 'dbgap' in str(dataset.get('dbgap_study_url', '')).lower() else 0,
+                'is_protected': 0,
                 'number_of_files': number_of_files,
                 'pretty_size': pretty_size
             })
@@ -339,7 +383,7 @@ class DRSSynchronizer:
     def generate_files_csv(
         self,
         missing_files: pd.DataFrame,
-        output_file: str = "files.csv"
+        output_file: str = "files_copy.csv"
     ) -> None:
         """
         Generate files.csv for importing new files into DRS.
@@ -464,10 +508,10 @@ class DRSSynchronizer:
                         hubmap_id,
                         dataset.get('published_timestamp', datetime.now().isoformat()),
                         dataset.get('dataset_type', ''),
-                        '',  # directory
+                        dataset.get('directory', ''),
                         dataset.get('doi_url', ''),
                         dataset.get('group_name', ''),
-                        1 if 'dbgap' in str(dataset.get('dbgap_study_url', '')).lower() else 0,
+                        0,
                         number_of_files,
                         pretty_size
                     ))
@@ -639,8 +683,8 @@ class DRSSynchronizer:
         print("=" * 80)
         print(f"Total execution time: {elapsed:.2f} seconds")
         print("\nGenerated files:")
-        print("  - manifest.csv (new datasets to import)")
-        print("  - files.csv (new files to import)")
+        print("  - manifest_copy.csv (new datasets to import)")
+        print("  - files_copy.csv (new files to import)")
         print("  - datasets_to_delete.csv (datasets to remove)")
         print("  - files_to_delete.csv (files to remove)")
         print("\nIntermediate data files:")
