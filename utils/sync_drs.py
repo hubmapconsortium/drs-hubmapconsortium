@@ -172,6 +172,7 @@ class DRSSynchronizer:
                 f.write('\n'.join(errors))
 
         df = pd.DataFrame(all_files)
+        df.rename(columns={"file_uuid": "uuid"}, inplace=True)
         print(f"   Found {len(df)} files in UUID API")
         return df
 
