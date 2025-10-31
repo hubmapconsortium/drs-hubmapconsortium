@@ -79,7 +79,8 @@ class DRSSynchronizer:
                     ],
                     "must": [
                         {"match": {"entity_type": "Dataset"}},
-                        {"match": {"status": "Published"}}
+                        {"match": {"status": "Published"}},
+                        {"match": {"data_access_level": "public"}},
                     ],
                     "minimum_should_match": 1
                 }
@@ -147,7 +148,7 @@ class DRSSynchronizer:
                     redirect_url = response.text
                     if redirect_url:
                         print(f"Following 303 redirect to: {redirect_url}")
-                        response = requests.get(url=redirect_url, headers=self.headers)
+                        # response = requests.get(url=redirect_url, headers=self.headers)
                     else:
                         print(f"303 redirect received but no Location header for dataset+ {dataset_uuid}")
                         continue
