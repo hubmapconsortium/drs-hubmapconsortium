@@ -143,6 +143,15 @@ class DRSSynchronizer:
             url = f"{UUID_API_URL}/{dataset_uuid}/files"
             try:
                 response = requests.get(url=url, headers=self.headers, timeout=30)
+                if response.status_code == 303:
+                    redirect_url = response.headers.get('Location')
+                    if redirect_url:
+                        print(f"Following 303 redirect to: {redirect_url}")
+                        response = requests.get(url=redirect_url, headers=self.headers)
+                    else:
+                        print(f"303 redirect received but no Location header for dataset+ {dataset_uuid}")
+                        continue
+
                 if response.status_code == 200:
                     files_data = response.json()
                     for file_info in files_data:
