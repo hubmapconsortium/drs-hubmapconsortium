@@ -31,7 +31,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from app import execute_sql_query, connect_to_database
 
 # Load configuration from JSON file
-config_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "config.json")
+config_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "sync_config.json")
 with open(config_path) as config_file:
     config_data = json.load(config_file)
 
@@ -363,10 +363,21 @@ class DRSSynchronizer:
             else:
                 pretty_size = f"{total_size}B"
 
+            # Convert published_timestamp from milliseconds to datetime
+            published_ts = dataset.get('published_timestamp')
+            if published_ts:
+                try:
+                    # Convert from milliseconds to seconds and create datetime
+                    creation_date = datetime.fromtimestamp(int(published_ts) / 1000).strftime('%Y-%m-%d %H:%M:%S')
+                except (ValueError, TypeError):
+                    creation_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            else:
+                creation_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
             manifest_data.append({
                 'uuid': uuid,
                 'hubmap_id': hubmap_id,
-                'creation_date': dataset.get('published_timestamp', datetime.now().isoformat()),
+                'creation_date': creation_date,
                 'dataset_type': dataset.get('dataset_type', ''),
                 'directory': dataset.get('directory', ''),
                 'doi_url': dataset.get('doi_url', ''),
@@ -498,6 +509,17 @@ class DRSSynchronizer:
                     else:
                         pretty_size = f"{total_size}B"
 
+                    # Convert published_timestamp from milliseconds to datetime
+                    published_ts = dataset.get('published_timestamp')
+                    if published_ts:
+                        try:
+                            # Convert from milliseconds to seconds and create datetime
+                            creation_date = datetime.fromtimestamp(int(published_ts) / 1000).strftime('%Y-%m-%d %H:%M:%S')
+                        except (ValueError, TypeError):
+                            creation_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                    else:
+                        creation_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
                     insert_query = """
                         INSERT INTO manifest (uuid, hubmap_id, creation_date, dataset_type, directory,
                                             doi_url, group_name, is_protected, number_of_files, pretty_size)
@@ -506,7 +528,7 @@ class DRSSynchronizer:
                     cursor.execute(insert_query, (
                         uuid,
                         hubmap_id,
-                        dataset.get('published_timestamp', datetime.now().isoformat()),
+                        creation_date,
                         dataset.get('dataset_type', ''),
                         dataset.get('directory', ''),
                         dataset.get('doi_url', ''),
