@@ -418,8 +418,8 @@ class DRSSynchronizer:
                 'name': file_info.get('filename', file_info.get('path', '')),
                 'dbgap_study_id': '',  # Populate if available
                 'file_uuid': file_uuid,
-                'checksum': file_info.get('checksum', ''),
-                'size': file_info.get('size', 0)
+                'checksum': file_info.get('md5_checksum', ''),
+                'size': file_info.get('size', 0.0)
             })
 
         files_df = pd.DataFrame(files_data)
@@ -492,23 +492,6 @@ class DRSSynchronizer:
                     uuid = dataset.get('uuid', '')
                     hubmap_id = dataset.get('hubmap_id', '')
 
-                    # Get files for this dataset to calculate size
-                    dataset_files = uuid_files[uuid_files['dataset_uuid'] == uuid] if 'dataset_uuid' in uuid_files.columns else pd.DataFrame()
-                    number_of_files = len(dataset_files)
-                    total_size = int(dataset_files['size'].sum()) if 'size' in dataset_files.columns else 0
-
-                    # Calculate pretty size
-                    if total_size >= 1099511627776:
-                        pretty_size = f"{round(total_size / 1099511627776, 1)}T"
-                    elif total_size >= 1073741824:
-                        pretty_size = f"{round(total_size / 1073741824, 1)}G"
-                    elif total_size >= 1048576:
-                        pretty_size = f"{round(total_size / 1048576, 1)}M"
-                    elif total_size >= 1024:
-                        pretty_size = f"{round(total_size / 1024, 1)}K"
-                    else:
-                        pretty_size = f"{total_size}B"
-
                     # Convert published_timestamp from milliseconds to datetime
                     published_ts = dataset.get('published_timestamp')
                     if published_ts:
@@ -534,8 +517,8 @@ class DRSSynchronizer:
                         dataset.get('doi_url', ''),
                         dataset.get('group_name', ''),
                         0,
-                        number_of_files,
-                        pretty_size
+                        0,
+                        0
                     ))
                 conn.commit()
                 print(f"   ✓ Inserted {len(datasets_to_add)} datasets")
@@ -558,8 +541,8 @@ class DRSSynchronizer:
                         file_info.get('filename', file_info.get('path', '')),
                         '',  # dbgap_study_id
                         file_uuid,
-                        file_info.get('checksum', ''),
-                        int(file_info.get('size', 0))
+                        file_info.get('md5_checksum', ''),
+                        file_info.get('size', 0.0)
                     ))
                 conn.commit()
                 print(f"   ✓ Inserted {len(files_to_add)} files")
