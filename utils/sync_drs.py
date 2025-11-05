@@ -468,13 +468,14 @@ class DRSSynchronizer:
     # STEP 7: EXECUTE SYNC OPERATIONS
     # ============================================================================
 
-    def execute_sync_operations(self, comparison: Dict[str, pd.DataFrame], uuid_files: pd.DataFrame) -> None:
+    def execute_sync_operations(self, comparison: Dict[str, pd.DataFrame], uuid_files: pd.DataFrame, search_datasets: pd.DataFrame) -> None:
         """
         Execute the actual database operations to sync DRS with upstream APIs.
 
         Args:
             comparison: Dict with datasets_to_add, files_to_add, datasets_to_delete, files_to_delete
             uuid_files: DataFrame with all files from UUID API (for calculating sizes)
+            search_datasets: DataFrame with all datasets from Search API (for UUID to hubmap_id mapping)
         """
         print("\n" + "=" * 80)
         print("EXECUTING SYNCHRONIZATION OPERATIONS")
@@ -540,14 +541,23 @@ class DRSSynchronizer:
 
             if not files_to_add.empty:
                 print(f"\n[2/5] Inserting {len(files_to_add)} new files...")
+
+                # Create mapping from dataset UUID to hubmap_id
+                uuid_to_hubmap_id = dict(zip(search_datasets['uuid'], search_datasets['hubmap_id']))
+
                 for _, file_info in files_to_add.iterrows():
                     file_uuid = file_info.get('uuid', '')
+                    dataset_uuid = file_info.get('dataset_uuid', '')
+
+                    # Look up the hubmap_id from the search_datasets
+                    hubmap_id = uuid_to_hubmap_id.get(dataset_uuid, dataset_uuid)
+
                     insert_query = """
                         INSERT INTO files (hubmap_id, drs_uri, name, dbgap_study_id, file_uuid, checksum, size)
                         VALUES (%s, %s, %s, %s, %s, %s, %s)
                     """
                     cursor.execute(insert_query, (
-                        file_info.get('dataset_uuid', ''),
+                        hubmap_id,
                         f"drs://drs.hubmapconsortium.org/{file_uuid}",
                         file_info.get('filename', file_info.get('path', '')),
                         '',  # dbgap_study_id
@@ -688,7 +698,7 @@ class DRSSynchronizer:
         # Step 7: Execute or dry-run
         if execute:
             # Execute actual database operations
-            self.execute_sync_operations(comparison, uuid_files)
+            self.execute_sync_operations(comparison, uuid_files, search_datasets)
         else:
             # Dry run mode: just print SQL instructions
             self.print_sql_instructions()
