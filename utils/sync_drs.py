@@ -527,6 +527,17 @@ class DRSSynchronizer:
 
             # Step 2: Insert new files
             files_to_add = comparison['files_to_add']
+
+            # Filter out files without size or checksum
+            original_count = len(files_to_add)
+            files_to_add = files_to_add[
+                (pd.notna(files_to_add.get('size'))) &
+                (pd.notna(files_to_add.get('md5_checksum')))
+            ]
+            filtered_count = original_count - len(files_to_add)
+            if filtered_count > 0:
+                print(f"\n   Filtered out {filtered_count} files without size or checksum")
+
             if not files_to_add.empty:
                 print(f"\n[2/5] Inserting {len(files_to_add)} new files...")
                 for _, file_info in files_to_add.iterrows():
