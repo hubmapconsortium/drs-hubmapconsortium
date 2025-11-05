@@ -31,7 +31,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from app import execute_sql_query, connect_to_database
 
 # Load configuration from JSON file
-config_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "sync_config.json")
+config_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "config.json")
 with open(config_path) as config_file:
     config_data = json.load(config_file)
 
